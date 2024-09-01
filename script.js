@@ -48,9 +48,9 @@ function mousePressed() {
 class Fish {
   constructor(x, y) {
     this.position = createVector(x, y);
-    this.size = random(20, 50); // Random size for variation
+    this.size = random(10, 75); // Random size for variation
     this.color = color(random(100, 255), random(100, 255), random(100, 255)); // Random color
-    this.speed = random(1, 3); // Random speed
+    this.speed = random(1.5, 3); // Random speed
     this.angle = random(TWO_PI); // Random initial direction
     this.steering = 0;
     this.jiggleOffset = random(1000); // Offset for jiggle to ensure each fish moves differently
@@ -58,9 +58,10 @@ class Fish {
 
   update() {
     if (baits.length > 0) {
-      // Find the closest bait
-      let closestBait = baits[0];
-      let closestDistance = dist(this.position.x, this.position.y, closestBait.position.x, closestBait.position.y);
+      // Find the closest bait within 250 pixels
+      let closestBait = null;
+      let closestDistance = 500; // Maximum attraction distance
+
       for (let bait of baits) {
         let d = dist(this.position.x, this.position.y, bait.position.x, bait.position.y);
         if (d < closestDistance) {
@@ -69,10 +70,18 @@ class Fish {
         }
       }
 
-      // Move aggressively towards the closest bait
-      let desiredDirection = p5.Vector.sub(closestBait.position, this.position).heading();
-      let steeringAngle = desiredDirection - this.angle;
-      this.angle += constrain(steeringAngle, -aggressiveSteeringSensitivity, aggressiveSteeringSensitivity);
+      if (closestBait) {
+        // Move aggressively towards the closest bait within the range
+        let desiredDirection = p5.Vector.sub(closestBait.position, this.position).heading();
+        let steeringAngle = desiredDirection - this.angle;
+        this.angle += constrain(steeringAngle, -aggressiveSteeringSensitivity, aggressiveSteeringSensitivity);
+      } else {
+        // Randomly adjust the steering angle when there is no bait or no bait in range
+        if (random(1) < 0.05) {
+          this.steering = random(-normalSteeringSensitivity, normalSteeringSensitivity);
+        }
+        this.angle += this.steering;
+      }
     } else {
       // Randomly adjust the steering angle when there is no bait
       if (random(1) < 0.05) {
@@ -92,8 +101,9 @@ class Fish {
     if (this.position.y > height) this.position.y = 0;
   }
 
+
   grow() {
-    this.size *= 1.1; // Increase the fish size by 10%
+    this.size *= 1.05;
   }
 
   display() {
